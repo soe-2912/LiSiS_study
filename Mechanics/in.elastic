@@ -1,0 +1,43 @@
+include init.mod
+include potential.mod
+
+variable maxiterations equal 100000
+
+compute virial all stress/atom NULL virial
+min_style cg
+
+#Initial position
+minimize 1.0e-10 1.0e-10 ${maxiterations} ${maxiterations}
+write_restart restart.equil
+
+variable tmp1 equal lx
+variable L0x  equal ${tmp1}
+variable tmp2 equal ly
+variable L0y  equal ${tmp2}
+variable tmp3 equal lz
+variable L0z  equal ${tmp3}
+
+# uxx Perturbation
+variable dir equal 1
+include displace.mod
+
+# uyy Perturbation
+variable dir equal 2
+include displace.mod
+
+# uzz Perturbation
+variable dir equal 3
+include displace.mod
+
+# uyz Perturbation
+variable dir equal 4
+include displace.mod
+
+# uxz Perturbation
+variable dir equal 5
+include displace.mod
+
+# uxy Perturbation
+variable dir equal 6
+include displace.mod
+

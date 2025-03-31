@@ -1,0 +1,103 @@
+#########################-Initialization#################################
+units		metal
+dimension	3
+boundary 	p p p 
+atom_style	charge
+read_data       data.initial_1_30Li
+#read_restart	file_restart.dat
+
+####################### Atom definition ################################
+mass		1 32.065 #S
+mass		2 28.085 #Si
+mass		3 6.941 #Li
+
+set type 1 charge -1.2 
+set type 2 charge 2.4
+set type 3 charge 0.6
+####################### Force field setup ##############################
+
+pair_style      buck/coul/long 8.0 12.0
+kspace_style     pppm 0.00001
+pair_coeff      * *  0.0                     1.0             0
+pair_coeff      1 1 110000.0  0.284 1000.0
+pair_coeff      1 2 80000  0.178 0
+pair_coeff      1 3 100000.0  0.182   0
+pair_coeff      2 2 2079884.45214  0.072   0
+pair_coeff      2 3 5474616.633  0.076   0
+pair_coeff      3 3 7020145.65763  0.080   0
+neighbor        2.0 bin
+neigh_modify    delay 0 every 1 check yes
+
+reset_timestep  0
+
+####################### Initiate dynamics ##############################
+compute         str_all  all stress/atom NULL
+compute         str_all_sum all reduce sum c_str_all[1] c_str_all[2] c_str_all[3] c_str_all[4] c_str_all[5] c_str_all[6]
+
+group           atomS type 1
+group           atomSi type 2
+group 		atomLi type 3
+
+compute         peaS atomS pe/atom
+compute         peaSi atomSi pe/atom
+compute		peaLi atomLi pe/atom
+compute        	peS atomS reduce sum c_peaS
+compute        	peSi atomSi reduce sum c_peaSi
+compute	       	peLi atomLi reduce sum c_peaLi
+
+compute 1 all pe/atom
+compute energy all reduce sum c_1
+
+min_style cg 
+minimize 1.0e-10 1.0e-10 100000 100000
+
+
+#System
+fix             1 all nvt temp 300.0 300.0 0.5
+ 
+dump           d_str_all all xyz 100 traj.xyz
+
+
+thermo          100
+
+thermo_style custom step temp pe press lx ly lz vol c_peS c_peSi c_peLi
+
+run             10000
+timestep        0.001
+
+unfix 1
+
+####################### Melt, quench, and relax ##############################
+
+
+fix 		2 all nvt temp 300 2000 0.5 
+run		100000	
+timestep        0.001
+unfix 		2			
+
+#initial mixing
+fix 		3 all nvt temp 2000 2000 0.5 
+#Tiden sættes til hvor lang tid den skal gøre det
+run		100000
+timestep        0.001
+unfix 		3
+
+
+#initial cooling
+fix 		4 all nvt temp 2000 300.0 0.5 
+run		1700000
+timestep        0.001
+unfix		4
+
+#final relaxation
+fix 		5 all nvt temp 300.0 300.0 0.5 
+run   		1000000
+timestep        0.001
+unfix		5
+
+write_data 	file_data_300.dat	
+write_restart	file_restart_300.dat
+
+
+
+
