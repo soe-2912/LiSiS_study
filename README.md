@@ -1,4 +1,4 @@
-LAMMPS files related to published study in xxxxx
+LAMMPS files related to published study (https://doi.org/10.1039/D5CP00285K)
 
 Folder "Glass_Preparation" provides used scripts for preparation of glass structures in LAMMPS format
 Folder "Mechanics" provides scripts to estimate the elastic constants of the studied systems.
